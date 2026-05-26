@@ -1,0 +1,86 @@
+{
+  "name": "git-client-app",
+  "version": "1.6.0",
+  "description": "GitX - Git GUI Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:all": "electron-builder --win --mac"
+  },
+  "keywords": [
+    "git",
+    "electron",
+    "gui"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "simple-git": "^3.21.0"
+  },
+  "build": {
+    "appId": "com.gitx.app",
+    "productName": "GitX",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "style.css",
+      "renderer.js",
+      "package.json",
+      "!portable/**/*",
+      "!dist/**/*",
+      "!**/*.md",
+      "!**/*.bat",
+      "!**/*.txt",
+      "!node_modules/**/*",
+      "node_modules/simple-git/**/*",
+      "node_modules/@simple-git/**/*",
+      "node_modules/@kwsites/**/*",
+      "node_modules/debug/**/*",
+      "node_modules/ms/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "sign": "./build/no-sign.js",
+      "signingHashAlgorithms": [],
+      "signAndEditExecutable": false,
+      "signDlls": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerLanguages": [
+        "zh_CN",
+        "en_US"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.developer-tools",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "title": "GitX",
+      "writeUpdateInfo": false
+    }
+  }
+}

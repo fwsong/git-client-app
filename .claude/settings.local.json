@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"^\\(debug|ms|@kwsites|simple-git\\)$\")",
+      "Bash(./pack-auto.bat *)",
+      "Bash(npm start *)"
+    ]
+  }
+}

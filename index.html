@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitX</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 欢迎页 -->
+        <div id="welcome-screen">
+            <div class="welcome-bg"></div>
+            <div class="welcome-container">
+                <div class="welcome-brand">
+                    <div class="welcome-brand-row">
+                        <div class="welcome-logo" aria-hidden="true">🚀</div>
+                        <h1>GitX</h1>
+                    </div>
+                    <p>简洁高效的Git桌面客户端</p>
+                </div>
+                <div class="welcome-card">
+                    <div class="welcome-actions">
+                        <button id="open-repo-btn" class="btn btn-primary btn-lg">打开仓库</button>
+                        <button id="clone-repo-btn" class="btn btn-ghost btn-lg">克隆仓库</button>
+                    </div>
+                    <div id="recent-repos" class="recent-repos"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主界面 -->
+        <div id="main-screen" style="display: none;">
+            <header class="header">
+                <div class="header-left">
+                    <div class="repo-avatar" id="repo-avatar">G</div>
+                    <div class="repo-meta">
+                        <h2 id="repo-name">GitX</h2>
+                        <div class="repo-badges">
+                            <span id="current-branch" class="badge badge-branch"></span>
+                            <span id="tracking-info" class="badge badge-tracking"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button id="settings-btn" class="btn btn-icon" type="button" title="设置">⚙</button>
+                    <button id="favorite-repo-btn" class="btn btn-icon" title="收藏此仓库">☆</button>
+                    <button id="theme-toggle-btn" class="btn btn-icon" title="切换主题">🌙</button>
+                    <button id="close-repo-btn" class="btn btn-ghost">关闭</button>
+                </div>
+            </header>
+
+            <div class="main-content">
+                <aside class="sidebar">
+                    <div class="sidebar-card repo-switcher sidebar-top">
+                        <label class="field-label" for="repo-switcher">仓库切换</label>
+                        <select id="repo-switcher" class="field-select"></select>
+                        <div class="repo-switcher-actions">
+                            <button id="open-other-repo-btn" class="btn btn-sm repo-action-btn repo-action-btn--open" type="button" title="打开本地已有仓库">打开仓库</button>
+                            <button id="clone-repo-sidebar-btn" class="btn btn-sm repo-action-btn repo-action-btn--clone" type="button" title="从远程 URL 克隆仓库">克隆仓库</button>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-workspace">
+                        <div class="sidebar-brand">工作区</div>
+                        <nav class="sidebar-nav">
+                            <button class="nav-item active" data-view="changes">
+                                <span class="nav-icon">●</span>
+                                <span class="nav-label">变更</span>
+                            </button>
+                            <button class="nav-item" data-view="history">
+                                <span class="nav-icon">◷</span>
+                                <span class="nav-label">历史</span>
+                            </button>
+                            <button class="nav-item" data-view="stash">
+                                <span class="nav-icon">▣</span>
+                                <span class="nav-label">Stash</span>
+                            </button>
+                            <button class="nav-item" data-view="tags">
+                                <span class="nav-icon">⌁</span>
+                                <span class="nav-label">标签</span>
+                            </button>
+                        </nav>
+                    </div>
+
+                    <div class="sidebar-branches">
+                        <div class="sidebar-branches-header">
+                            <span class="sidebar-branches-title">分支</span>
+                            <div class="sidebar-branches-actions">
+                                <button id="new-branch-btn" class="btn btn-ghost btn-sm" type="button" title="新建分支">+</button>
+                            </div>
+                        </div>
+                        <div class="sidebar-branches-scroll">
+                            <div class="sidebar-branches-section">
+                                <div class="sidebar-branches-label">本地</div>
+                                <div id="branch-list" class="branch-list sidebar-branch-list"></div>
+                            </div>
+                            <div class="sidebar-branches-section">
+                                <div class="sidebar-branches-label">远程</div>
+                                <div id="remote-branch-list" class="branch-list sidebar-branch-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <main class="content-area">
+                    <div class="content-toolbar">
+                        <div class="content-toolbar-sync">
+                            <button id="fetch-btn" class="btn btn-sm" type="button">Fetch</button>
+                            <button id="commit-fab" class="btn btn-sm" type="button">Commit</button>
+                            <button id="pull-btn" class="btn btn-sm" type="button">Pull</button>
+                            <button id="push-btn" class="btn btn-sm" type="button">Push</button>
+                            <button id="ignore-manage-fab" class="btn btn-sm" type="button">Manage Ignore</button>
+                        </div>
+                        <div class="content-toolbar-spacer"></div>
+                        <button id="refresh-btn" class="btn btn-ghost btn-sm" type="button">刷新</button>
+                    </div>
+                    <div class="content-views">
+                    <!-- 变更视图 -->
+                    <div id="changes-view" class="view active">
+                        <div class="changes-page">
+                            <div id="operation-banner" class="operation-bar" style="display: none;">
+                                <span id="operation-title" class="operation-bar__title"></span>
+                                <span id="operation-desc" class="operation-bar__desc"></span>
+                                <div class="operation-bar__actions">
+                                    <button id="op-continue-btn" class="btn btn-primary btn-sm" type="button">继续</button>
+                                    <button id="op-skip-btn" class="btn btn-ghost btn-sm" type="button">跳过</button>
+                                    <button id="op-abort-btn" class="btn btn-ghost btn-sm" type="button">中止</button>
+                                </div>
+                            </div>
+                            <div class="changes-table-wrap">
+                                <table class="changes-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>State</th>
+                                            <th>Relative Directory</th>
+                                            <th class="changes-table__actions-col"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="change-file-list"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 历史 -->
+                    <div id="history-view" class="view">
+                        <div class="history-page">
+                            <div class="page-header">
+                                <h2 class="page-title">提交历史</h2>
+                                <p class="view-hint" id="history-branch-hint">双击提交查看改动文件；右键操作</p>
+                            </div>
+                            <div class="toolbar-card search-bar">
+                                <input type="text" id="commit-search" class="field-input" placeholder="搜索提交信息…" />
+                                <button id="commit-search-btn" class="btn btn-secondary btn-sm">搜索</button>
+                                <button id="commit-search-clear" class="btn btn-ghost btn-sm">清除</button>
+                            </div>
+                            <div id="commit-list" class="commit-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- 标签 -->
+                    <div id="tags-view" class="view">
+                        <div class="page-header branch-header">
+                            <div><h2 class="page-title">标签</h2></div>
+                            <div class="branch-header-actions">
+                                <button id="push-tags-btn" class="btn btn-ghost btn-sm" type="button">推送标签</button>
+                                <button id="new-tag-btn" class="btn btn-primary btn-sm" type="button">新建标签</button>
+                            </div>
+                        </div>
+                        <div id="tag-list" class="tag-list"></div>
+                    </div>
+
+                    <!-- 设置 -->
+                    <div id="settings-view" class="view">
+                        <div class="page-header">
+                            <h2 class="page-title">设置</h2>
+                            <p class="view-hint">Git 身份与子模块</p>
+                        </div>
+                        <div class="panel-card settings-form">
+                            <label class="field-label" for="config-scope">配置范围</label>
+                            <select id="config-scope" class="field-select">
+                                <option value="local">当前仓库 (local)</option>
+                                <option value="global">全局 (global)</option>
+                            </select>
+                            <label class="field-label" for="config-name">用户名</label>
+                            <input type="text" id="config-name" class="field-input" placeholder="Your Name" />
+                            <label class="field-label" for="config-email">邮箱</label>
+                            <input type="text" id="config-email" class="field-input" placeholder="you@example.com" />
+                            <button id="save-config-btn" class="btn btn-primary">保存配置</button>
+                        </div>
+                        <div class="panel-card settings-repo-info">
+                            <label class="field-label">仓库路径</label>
+                            <p id="settings-repo-path" class="settings-path-text"></p>
+                        </div>
+                        <h4 class="subsection-title">子模块</h4>
+                        <button id="submodule-update-all-btn" class="btn btn-secondary btn-sm">更新全部子模块</button>
+                        <div id="submodule-list" class="submodule-list"></div>
+                    </div>
+
+                    <!-- Stash -->
+                    <div id="stash-view" class="view">
+                        <div class="page-header branch-header">
+                            <div><h2 class="page-title">Stash</h2></div>
+                            <button id="new-stash-btn" class="btn btn-primary btn-sm">保存当前更改</button>
+                        </div>
+                        <div id="stash-list" class="stash-list"></div>
+                    </div>
+                    </div>
+                </main>
+            </div>
+
+            <div id="context-menu" class="context-menu" style="display: none;" role="menu"></div>
+
+            <footer class="statusbar">
+                <span class="statusbar__dot"></span>
+                <span id="status-text">就绪</span>
+            </footer>
+        </div>
+
+        <div id="dialog-overlay" class="dialog-overlay" style="display: none;">
+            <div class="dialog" id="dialog-panel">
+                <div class="dialog-header">
+                    <h3 id="dialog-title">对话框</h3>
+                    <button id="dialog-close" class="btn btn-icon btn-sm" type="button" aria-label="关闭">✕</button>
+                </div>
+                <div class="dialog-body" id="dialog-body"></div>
+                <div class="dialog-footer" id="dialog-footer">
+                    <button id="dialog-cancel" class="btn btn-ghost" type="button">取消</button>
+                    <button id="dialog-confirm" class="btn btn-primary" type="button">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="split-diff-overlay" class="dialog-overlay dialog-overlay--top" style="display: none;">
+            <div class="dialog dialog--split">
+                <div class="dialog-header">
+                    <h3 id="split-diff-title">文件对比</h3>
+                    <button id="split-diff-close" class="btn btn-icon btn-sm" type="button">✕</button>
+                </div>
+                <div class="dialog-body dialog-body--flush" id="split-diff-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
