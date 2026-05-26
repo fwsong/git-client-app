@@ -20,7 +20,8 @@
   "license": "MIT",
   "devDependencies": {
     "electron": "^28.3.3",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "rcedit": "^5.0.2"
   },
   "dependencies": {
     "simple-git": "^3.21.0"
@@ -29,14 +30,19 @@
     "appId": "com.gitx.app",
     "productName": "GitX",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
+    "icon": "build/icon.ico",
+    "afterPack": "scripts/after-pack-patch-icon.cjs",
     "files": [
       "main.js",
       "preload.js",
       "index.html",
       "style.css",
       "renderer.js",
+      "build/icon.ico",
+      "build/icon.png",
       "package.json",
       "!portable/**/*",
       "!dist/**/*",
@@ -54,6 +60,7 @@
       "target": [
         "nsis"
       ],
+      "icon": "build/icon.ico",
       "sign": "./build/no-sign.js",
       "signingHashAlgorithms": [],
       "signAndEditExecutable": false,

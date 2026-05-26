@@ -33,6 +33,18 @@ if not exist "node_modules\electron-builder\" (
     )
 )
 
+if not exist "build\icon.ico" (
+    echo ERROR: build\icon.ico not found. Run scripts\build-icon.bat first.
+    pause
+    exit /b 1
+)
+echo Regenerating icons from build\icon-source.png ...
+call scripts\build-icon.bat
+if errorlevel 1 (
+    pause
+    exit /b 1
+)
+
 set CSC_IDENTITY_AUTO_DISCOVERY=false
 echo Building NSIS installer...
 call npm.cmd run dist:win

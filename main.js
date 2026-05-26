@@ -81,8 +81,19 @@ function startRepoWatch(repoPath) {
   activeRepoWatch = { repoPath, watchers, debounceTimer }
 }
 
+function resolveAppIcon() {
+  const candidates = [
+    path.join(__dirname, 'build', 'icon.ico'),
+    path.join(__dirname, 'build', 'icon.png')
+  ]
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p
+  }
+  return undefined
+}
+
 function createWindow() {
-  mainWindow = new BrowserWindow({
+  const winOptions = {
     width: 1200,
     height: 800,
     title: 'GitX',
@@ -90,9 +101,12 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true
-    },
-    icon: path.join(__dirname, 'icon.ico')
-  })
+    }
+  }
+  const icon = resolveAppIcon()
+  if (icon) winOptions.icon = icon
+
+  mainWindow = new BrowserWindow(winOptions)
 
   mainWindow.loadFile('index.html')
 

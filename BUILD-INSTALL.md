@@ -128,7 +128,7 @@ npm run dist
 
 将图标放入 `build/` 目录可在安装包中显示自定义图标：
 
-- Windows：`build/icon.ico`
+- Windows：`build/icon.ico`（须为正方形；宽图用 `scripts\build-icon.bat` 从 `build\icon-source.png` 生成）
 - macOS：`build/icon.icns`
 
 未放置时使用 Electron 默认图标。
