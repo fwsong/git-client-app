@@ -58,6 +58,17 @@ npm start
 
 详见 [BUILD-INSTALL.md](BUILD-INSTALL.md)
 
+### 4. 打包 macOS 安装包
+
+在 Mac 上执行：
+
+```bash
+nvm use 22
+npm run pack:mac
+```
+
+生成位置：`dist/GitX-版本号-架构.dmg` 和 `dist/GitX-版本号-架构-mac.zip`
+
 ## 📁 项目结构
 
 ```
@@ -71,6 +82,7 @@ git-client-app/
 ├── start.bat                 # 运行应用
 ├── pack-auto.bat             # 绿色版
 ├── pack-installer-win.bat    # Windows 安装包
+├── scripts/pack-mac.sh       # macOS 安装包
 ├── README.md
 ├── BUILD-INSTALL.md
 ├── ARCHITECTURE.md
@@ -130,12 +142,12 @@ npm start
 |------|------|
 | 绿色版 | `pack-auto.bat` |
 | Windows 安装包 | `pack-installer-win.bat` 或 `npm run dist:win` |
-| macOS 安装包 | 在 Mac 上 `npm run dist:mac`（见 BUILD-INSTALL.md） |
+| macOS 安装包 | 在 Mac 上 `npm run pack:mac`（见 BUILD-INSTALL.md） |
 
 ## 📦 分发
 
 - **绿色版**：复制 `portable/GitX/` 文件夹，运行 `GitX.exe`
-- **安装包**：分发 `dist/GitX Setup x.x.x.exe`
+- **安装包**：Windows 分发 `dist/GitX Setup x.x.x.exe`；macOS 分发 `dist/GitX-x.x.x-*.dmg`
 
 ## 🎨 界面预览
 

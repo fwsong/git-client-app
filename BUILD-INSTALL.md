@@ -4,7 +4,7 @@
 
 ## 前置条件
 
-1. 已安装 [Node.js](https://nodejs.org/)（建议 LTS 18+）
+1. 已安装 [Node.js](https://nodejs.org/) 22.12+
 2. 本机已安装 **Git**（GitX 运行时会调用系统 `git` 命令）
 3. 在项目根目录执行过：
 
@@ -73,16 +73,35 @@ dist/
 **必须在 Mac 上**打开终端，进入项目目录：
 
 ```bash
-npm install
-npm run dist:mac
+npm run pack:mac
+```
+
+`pack:mac` 会自动完成：
+
+- 检查当前系统是否为 macOS
+- 使用 `npm ci` 安装依赖
+- 从 `build/icon.png` 生成 `build/icon.icns`
+- 清理 `dist/`
+- 生成 `.dmg` 与 `.zip`
+
+如需保留旧的 `dist/` 内容，可执行：
+
+```bash
+CLEAN_DIST=0 npm run pack:mac
+```
+
+如已确认依赖完整、想跳过依赖安装，可执行：
+
+```bash
+INSTALL_DEPS=0 npm run pack:mac
 ```
 
 ### 输出位置
 
 ```
 dist/
-├── GitX-1.6.0.dmg          ← 常见分发格式（拖到「应用程序」）
-├── GitX-1.6.0-mac.zip      ← 压缩包形式
+├── GitX-1.6.0-*.dmg        ← 常见分发格式（拖到「应用程序」）
+├── GitX-1.6.0-*-mac.zip    ← 压缩包形式
 └── mac/                    ← 未打包的 .app（调试用）
 ```
 
@@ -94,6 +113,18 @@ dist/
 - 系统设置 → 隐私与安全性 → 仍要打开  
 
 若要上架 / 广泛分发，需要 Apple 开发者账号做 **代码签名** 与 **公证（notarization）**（本仓库默认未配置签名）。
+
+### 可选：签名打包
+
+默认流程会设置 `CSC_IDENTITY_AUTO_DISCOVERY=false`，输出未签名包，适合本机测试或内部分发。
+
+如果本机钥匙串已有 Apple Developer ID 证书，可传入证书名：
+
+```bash
+CSC_NAME="Developer ID Application: Your Name (TEAMID)" npm run pack:mac
+```
+
+如果在 CI 中使用证书文件，可按 electron-builder 的 `CSC_LINK` / `CSC_KEY_PASSWORD` 方式注入。公证还需要配置 Apple ID / App Store Connect API Key 等凭据。
 
 ---
 
@@ -129,6 +160,6 @@ npm run dist
 将图标放入 `build/` 目录可在安装包中显示自定义图标：
 
 - Windows：`build/icon.ico`（须为正方形；宽图用 `scripts\build-icon.bat` 从 `build\icon-source.png` 生成）
-- macOS：`build/icon.icns`
+- macOS：`build/icon.icns`（`npm run pack:mac` 会从 `build/icon.png` 自动生成）
 
 未放置时使用 Electron 默认图标。
