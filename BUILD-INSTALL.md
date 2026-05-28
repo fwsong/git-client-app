@@ -43,7 +43,7 @@ npm run dist:win
 
 ```
 dist/
-├── GitX Setup 1.6.0.exe    ← 安装程序（发给用户）
+├── GitX Setup 1.7.0.exe    ← 安装程序（发给用户）
 └── win-unpacked/           ← 免安装目录版（调试用）
 ```
 
@@ -100,8 +100,8 @@ INSTALL_DEPS=0 npm run pack:mac
 
 ```
 dist/
-├── GitX-1.6.0-*.dmg        ← 常见分发格式（拖到「应用程序」）
-├── GitX-1.6.0-*-mac.zip    ← 压缩包形式
+├── GitX-1.7.0.dmg          ← 常见分发格式（拖到「应用程序」）
+├── GitX-1.7.0-mac.zip      ← 压缩包形式
 └── mac/                    ← 未打包的 .app（调试用）
 ```
 

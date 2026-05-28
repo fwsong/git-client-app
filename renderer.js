@@ -62,6 +62,7 @@ const configScopeSelect = document.getElementById('config-scope')
 const repoSwitcher = document.getElementById('repo-switcher')
 const openOtherRepoBtn = document.getElementById('open-other-repo-btn')
 const cloneRepoSidebarBtn = document.getElementById('clone-repo-sidebar-btn')
+const removeRepoBtn = document.getElementById('remove-repo-btn')
 const dialogPanel = document.getElementById('dialog-panel')
 const splitDiffOverlay = document.getElementById('split-diff-overlay')
 const splitDiffTitle = document.getElementById('split-diff-title')
@@ -138,6 +139,16 @@ function saveRecentRepo(repoPath) {
     list.unshift(repoPath)
     localStorage.setItem(RECENT_REPOS_KEY, JSON.stringify(list.slice(0, MAX_RECENT)))
     renderRecentRepos()
+    populateRepoSwitcher()
+}
+
+function removeRepoFromSavedList(repoPath) {
+    const recent = getRecentRepos().filter(p => p !== repoPath)
+    const favorites = getFavoriteRepos().filter(p => p !== repoPath)
+    localStorage.setItem(RECENT_REPOS_KEY, JSON.stringify(recent))
+    localStorage.setItem(FAVORITE_REPOS_KEY, JSON.stringify(favorites))
+    renderRecentRepos()
+    populateRepoSwitcher()
 }
 
 function getFavoriteRepos() {
@@ -162,6 +173,7 @@ function toggleFavorite(repoPath, e) {
     }
     localStorage.setItem(FAVORITE_REPOS_KEY, JSON.stringify(list))
     renderRecentRepos()
+    populateRepoSwitcher()
 }
 
 function renderRepoListItem(repoPath) {
@@ -172,6 +184,7 @@ function renderRepoListItem(repoPath) {
         <li class="repo-list-item">
             <button type="button" class="repo-star ${starred ? 'starred' : ''}" data-path="${path}" title="${starred ? '取消收藏' : '收藏'}">${starred ? '★' : '☆'}</button>
             <button type="button" class="recent-item" data-path="${path}" title="${escapeAttr(repoPath)}">${name}</button>
+            <button type="button" class="repo-remove" data-path="${path}" title="从列表移除（不删除磁盘文件）" aria-label="移除">×</button>
         </li>
     `
 }
@@ -197,6 +210,12 @@ function renderRecentRepos() {
     recentReposEl.querySelectorAll('.repo-star').forEach(btn => {
         btn.addEventListener('click', (e) => toggleFavorite(btn.dataset.path, e))
     })
+    recentReposEl.querySelectorAll('.repo-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation()
+            removeRepositoryFromList(btn.dataset.path)
+        })
+    })
 }
 
 function updateFavoriteButton() {
@@ -209,20 +228,59 @@ function updateFavoriteButton() {
 
 function getOpenRepoList() {
     const set = new Set()
-    if (currentRepoPath) set.add(currentRepoPath)
     getFavoriteRepos().forEach(p => set.add(p))
     getRecentRepos().forEach(p => set.add(p))
+    if (currentRepoPath) set.add(currentRepoPath)
     return [...set]
+}
+
+function updateRemoveRepoButton() {
+    if (!removeRepoBtn) return
+    const repos = getOpenRepoList()
+    const selected = repoSwitcher?.value || currentRepoPath
+    removeRepoBtn.disabled = !repos.length || !selected
 }
 
 function populateRepoSwitcher() {
     const repos = getOpenRepoList()
+    const prev = repoSwitcher.value
     repoSwitcher.innerHTML = repos.map(p => {
         const name = escapeHtml(p.split(/[/\\]/).pop())
         const path = escapeAttr(p)
         const selected = p === currentRepoPath ? 'selected' : ''
         return `<option value="${path}" ${selected} title="${path}">${name}</option>`
     }).join('')
+    if (repos.length) {
+        const keep = repos.includes(prev) ? prev : (currentRepoPath && repos.includes(currentRepoPath) ? currentRepoPath : repos[0])
+        repoSwitcher.value = keep
+    }
+    updateRemoveRepoButton()
+}
+
+async function closeCurrentRepositoryView() {
+    await stopRepoAutoRefresh()
+    pendingSquashMerge = false
+    pendingSquashMergeSourceBranch = ''
+    currentRepoPath = null
+    hideSplitDiffDialog()
+    hideDialog()
+    mainScreen.style.display = 'none'
+    welcomeScreen.style.display = 'flex'
+}
+
+async function removeRepositoryFromList(repoPath) {
+    if (!repoPath) return
+    const name = repoPath.split(/[/\\]/).pop() || repoPath
+    const ok = await showAppConfirm(
+        `从列表中移除「${name}」？\n\n仅清除本应用的最近/收藏记录，不会删除磁盘上的仓库文件。`,
+        { title: '移除仓库', variant: 'warning' }
+    )
+    if (!ok) return
+
+    removeRepoFromSavedList(repoPath)
+    if (repoPath === currentRepoPath) {
+        await closeCurrentRepositoryView()
+    }
 }
 
 async function startRepoAutoRefresh(repoPath) {
@@ -309,10 +367,16 @@ async function openRepository(repoPath) {
 }
 
 repoSwitcher.addEventListener('change', async () => {
+    updateRemoveRepoButton()
     const path = repoSwitcher.value
     if (path && path !== currentRepoPath) {
         await openRepositoryPath(path)
     }
+})
+
+removeRepoBtn.addEventListener('click', async () => {
+    const path = repoSwitcher.value || currentRepoPath
+    await removeRepositoryFromList(path)
 })
 
 openOtherRepoBtn.addEventListener('click', async () => {
@@ -396,6 +460,7 @@ cloneRepoBtn.addEventListener('click', showCloneRepoDialog)
 cloneRepoSidebarBtn?.addEventListener('click', showCloneRepoDialog)
 
 renderRecentRepos()
+populateRepoSwitcher()
 
 function initTheme() {
     const saved = localStorage.getItem(THEME_KEY) || 'dark'
@@ -415,16 +480,7 @@ themeToggleBtn.addEventListener('click', () => {
 
 initTheme()
 
-closeRepoBtn.addEventListener('click', async () => {
-    await stopRepoAutoRefresh()
-    pendingSquashMerge = false
-    pendingSquashMergeSourceBranch = ''
-    currentRepoPath = null
-    hideSplitDiffDialog()
-    hideDialog()
-    mainScreen.style.display = 'none'
-    welcomeScreen.style.display = 'flex'
-})
+closeRepoBtn.addEventListener('click', () => closeCurrentRepositoryView())
 
 refreshBtn.addEventListener('click', async () => {
     if (currentRepoPath) await loadRepoData()
