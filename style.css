@@ -282,6 +282,22 @@ body {
 
 .repo-star:hover { background: var(--bg-surface-hover); }
 
+.repo-remove {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+}
+
+.repo-remove:hover {
+    color: var(--danger);
+    background: rgba(248, 81, 73, 0.12);
+}
+
 .recent-item {
     flex: 1;
     background: var(--bg-surface);
@@ -2103,6 +2119,10 @@ body {
     margin-top: 8px;
 }
 
+.repo-switcher-actions .repo-action-btn--remove {
+    grid-column: 1 / -1;
+}
+
 .repo-action-btn {
     min-width: 0;
     padding: 8px 6px;
@@ -2146,6 +2166,29 @@ body {
     outline: 2px solid var(--repo-clone-text);
     outline-offset: 2px;
 }
+
+.repo-action-btn--remove {
+    background: rgba(248, 81, 73, 0.1);
+    border-color: rgba(248, 81, 73, 0.35);
+    color: var(--danger);
+}
+
+.repo-action-btn--remove:hover:not(:disabled) {
+    background: rgba(248, 81, 73, 0.18);
+    border-color: rgba(248, 81, 73, 0.5);
+    color: var(--danger);
+}
+
+.repo-action-btn--remove:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.repo-action-btn--remove:focus-visible {
+    outline: 2px solid var(--danger);
+    outline-offset: 2px;
+}
+
 .switcher-label { margin-bottom: 6px; }
 .operation-banner { /* id kept */ }
 .conflict-panel { /* id kept */ }
