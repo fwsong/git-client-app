@@ -333,7 +333,8 @@ ipcMain.handle('git-remote-add', async (event, repoPath, remoteName, url) => {
     }
     const { cloneUrl } = parseCloneUrl(url)
     const git = simpleGit(repoPath)
-    const existing = await git.getRemotes()
+    // simple-git 3.x getRemotes() 返回对象数组 [{name:'origin',refs:{...}}]，需取 .name
+    const existing = (await git.getRemotes()).map((r) => r.name)
     if (existing.includes(name)) {
       await git.removeRemote(name)
     }
@@ -344,10 +345,32 @@ ipcMain.handle('git-remote-add', async (event, repoPath, remoteName, url) => {
   }
 })
 
+ipcMain.handle('git-remote-remove', async (event, repoPath, remoteName) => {
+  try {
+    const name = (remoteName || '').trim()
+    if (!name) {
+      throw new Error('请输入远程名称')
+    }
+    const git = simpleGit(repoPath)
+    // simple-git 3.x getRemotes() 返回对象数组 [{name:'origin',refs:{...}}]，需取 .name 后再查找
+    const remoteObjects = await git.getRemotes()
+    const remoteNames = remoteObjects.map((r) => r.name)
+    if (!remoteNames.includes(name)) {
+      throw new Error(`远程「${name}」不存在`)
+    }
+    await git.removeRemote(name)
+    return { success: true, remoteName: name }
+  } catch (error) {
+    throw new Error(error.message)
+  }
+})
+
 ipcMain.handle('git-push', async (event, repoPath, force = false, options = {}) => {
   try {
     const git = simpleGit(repoPath)
-    const remotes = await git.getRemotes()
+    // simple-git 3.x getRemotes() 返回对象数组 [{name:'origin',refs:{...}}]，取 .name 使用
+    const remoteObjects = await git.getRemotes()
+    const remotes = remoteObjects.map((r) => r.name)
     if (!remotes.length) {
       throw new Error('尚未配置远程仓库，请先绑定远程地址')
     }
@@ -363,10 +386,12 @@ ipcMain.handle('git-push', async (event, repoPath, force = false, options = {}) 
       if (!remotes.includes(remote)) {
         throw new Error(`远程「${remote}」不存在`)
       }
-      const args = force
-        ? ['--force', '-u', remote, branch]
-        : ['-u', remote, branch]
-      result = await git.push(args)
+      // 使用 raw 直接拼 git push 参数，避免 simple-git 封装层对首次推送
+      // （空远程仓库）解析 refspec 时产生歧义
+      const rawArgs = ['push', '-u', remote, branch]
+      if (force) rawArgs.splice(1, 0, '--force')
+      await git.raw(rawArgs)
+      result = { remote, ref: { local: branch, remote: `${remote}/${branch}` } }
     } else if (force) {
       result = await git.push(['--force'])
     } else {

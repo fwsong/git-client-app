@@ -62,6 +62,7 @@ const configScopeSelect = document.getElementById('config-scope')
 const repoSwitcher = document.getElementById('repo-switcher')
 const openOtherRepoBtn = document.getElementById('open-other-repo-btn')
 const cloneRepoSidebarBtn = document.getElementById('clone-repo-sidebar-btn')
+const removeRemoteBtn = document.getElementById('remove-remote-btn')
 const removeRepoBtn = document.getElementById('remove-repo-btn')
 const dialogPanel = document.getElementById('dialog-panel')
 const splitDiffOverlay = document.getElementById('split-diff-overlay')
@@ -241,6 +242,20 @@ function updateRemoveRepoButton() {
     removeRepoBtn.disabled = !repos.length || !selected
 }
 
+async function updateRemoveRemoteButton() {
+    if (!removeRemoteBtn) return
+    if (!currentRepoPath) {
+        removeRemoteBtn.disabled = true
+        return
+    }
+    try {
+        const info = await window.gitAPI.getRemotePushInfo(currentRepoPath)
+        removeRemoteBtn.disabled = !info?.hasRemotes
+    } catch {
+        removeRemoteBtn.disabled = true
+    }
+}
+
 function populateRepoSwitcher() {
     const repos = getOpenRepoList()
     const prev = repoSwitcher.value
@@ -262,6 +277,7 @@ async function closeCurrentRepositoryView() {
     pendingSquashMerge = false
     pendingSquashMergeSourceBranch = ''
     currentRepoPath = null
+    if (removeRemoteBtn) removeRemoteBtn.disabled = true
     hideSplitDiffDialog()
     hideDialog()
     mainScreen.style.display = 'none'
@@ -361,6 +377,7 @@ async function openRepository(repoPath) {
     saveRecentRepo(repoPath)
     updateFavoriteButton()
     populateRepoSwitcher()
+    updateRemoveRemoteButton()
     await loadRepoData()
     await startRepoAutoRefresh(repoPath)
     requestAnimationFrame(() => fetchBtn?.focus())
@@ -368,9 +385,62 @@ async function openRepository(repoPath) {
 
 repoSwitcher.addEventListener('change', async () => {
     updateRemoveRepoButton()
+    if (currentRepoPath) updateRemoveRemoteButton()
     const path = repoSwitcher.value
     if (path && path !== currentRepoPath) {
         await openRepositoryPath(path)
+    }
+})
+
+removeRemoteBtn.addEventListener('click', async () => {
+    if (!currentRepoPath) return
+    try {
+        const info = await window.gitAPI.getRemotePushInfo(currentRepoPath)
+        const remotes = info?.remotes || []
+        if (!remotes.length) {
+            await showAppAlert('当前仓库没有已绑定的远程', { variant: 'info' })
+            return
+        }
+        let remoteName
+        if (remotes.length === 1) {
+            remoteName = remotes[0].name
+        } else {
+            // 多个远程时让用户选择
+            const optionsHtml = remotes.map((r, i) => `
+                <label class="ignore-choice-item">
+                    <input type="radio" name="remote-pick" value="${escapeAttr(r.name)}" ${i === 0 ? 'checked' : ''} />
+                    <span>${escapeHtml(r.name)} <code style="font-size:0.75rem;color:var(--text-muted)">${escapeHtml(r.pushUrl || r.fetchUrl || '')}</code></span>
+                </label>
+            `).join('')
+            await new Promise((resolve) => {
+                showDialog(
+                    '选择要取消关联的远程',
+                    `<div class="ignore-choice-list">${optionsHtml}</div>`,
+                    () => {
+                        remoteName = dialogBody.querySelector('input[name="remote-pick"]:checked')?.value
+                        resolve()
+                    }
+                )
+                dialogConfirm.textContent = '取消关联'
+            })
+            if (!remoteName) return
+        }
+
+        const confirmed = await showAppConfirm(
+            `确定要取消与远程「${remoteName}」的关联吗？\n\n此操作仅删除本地 git remote 引用，不会影响远程仓库本身。`,
+            { variant: 'warning', title: '取消远程关联' }
+        )
+        if (!confirmed) return
+
+        setStatus(`正在取消远程关联 ${remoteName}...`)
+        await window.gitAPI.removeRemote(currentRepoPath, remoteName)
+        await loadRepoData()
+        await updateRemoveRemoteButton()
+        setStatus(`已取消与「${remoteName}」的关联`)
+        await showAppAlert(`远程「${remoteName}」已取消关联`, { variant: 'success', title: '完成' })
+    } catch (error) {
+        await showAppAlert('取消远程关联失败: ' + error.message)
+        setStatus('就绪')
     }
 })
 

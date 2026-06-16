@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('gitAPI', {
   push: (repoPath, force = false, options) => ipcRenderer.invoke('git-push', repoPath, force, options),
   getRemotePushInfo: (repoPath) => ipcRenderer.invoke('git-remote-push-info', repoPath),
   addRemote: (repoPath, remoteName, url) => ipcRenderer.invoke('git-remote-add', repoPath, remoteName, url),
+  removeRemote: (repoPath, remoteName) => ipcRenderer.invoke('git-remote-remove', repoPath, remoteName),
   pull: (repoPath) => ipcRenderer.invoke('git-pull', repoPath),
   fetch: (repoPath) => ipcRenderer.invoke('git-fetch', repoPath),
   resetFile: (repoPath, filePath) => ipcRenderer.invoke('git-reset-file', repoPath, filePath),
